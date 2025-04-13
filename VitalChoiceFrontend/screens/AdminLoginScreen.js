@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+
 
 const AdminLoginScreen = () => {
   const [password, setPassword] = useState('');
+  const navigation = useNavigation();
 
   const login = async () => {
     try {
@@ -14,7 +18,9 @@ const AdminLoginScreen = () => {
 
       const data = await res.json();
       if (res.ok) {
+        await AsyncStorage.setItem('isAdmin', 'true');
         Alert.alert('Success', 'Login successful ✅');
+        
       } else {
         Alert.alert('Error', 'Wrong password ❌');
       }

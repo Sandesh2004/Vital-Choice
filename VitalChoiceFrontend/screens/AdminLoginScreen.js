@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../config';
 
 
-const AdminLoginScreen = () => {
+const AdminLoginScreen = ({setIsAdmin }) => {
   const [password, setPassword] = useState('');
   const navigation = useNavigation();
 
   const login = async () => {
     try {
-      const res = await fetch('http://192.168.32.58:5000/api/admin/login', {
+      const res = await fetch(`${BASE_URL}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
@@ -20,7 +21,7 @@ const AdminLoginScreen = () => {
       if (res.ok) {
         await AsyncStorage.setItem('isAdmin', 'true');
         Alert.alert('Success', 'Login successful ✅');
-        
+        setIsAdmin(true);
       } else {
         Alert.alert('Error', 'Wrong password ❌');
       }

@@ -1,20 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import axios from 'axios';
+import { BASE_URL } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { auth } from '../firebaseConfig';
-import {signInWithEmailAndPassword } from 'firebase/auth';
 
-const UserLoginScreen = ({ navigation }) => {
+
+const UserLoginScreen = ({ navigation, setUserLoggedIn }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
 
   const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const response = await axios.post(`${BASE_URL}/api/user/login`, {
+        email,
+        password,
+      });
+
+      await AsyncStorage.setItem('authToken', response.data.idToken);
       Alert.alert('Success', 'Logged in successfully!');
-      // Navigate to user dashboard or home screen
+      setUserLoggedIn(true);
     } catch (error) {
-      Alert.alert('Error : Invalid Credentials');
+      Alert.alert('Error', error.response?.data?.error || 'Invalid Credentials');
     }
   };
 

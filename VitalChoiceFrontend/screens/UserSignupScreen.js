@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { auth } from '../firebaseConfig';
-import {createUserWithEmailAndPassword } from 'firebase/auth';
+import axios from 'axios';
+import { BASE_URL } from '../config';
+
 
 const UserSignupScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -14,12 +15,15 @@ const UserSignupScreen = ({ navigation }) => {
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert('Success', 'Account created successfully!');
-      // Navigate to login page after signup
+      const response = await axios.post(`${BASE_URL}/api/user/register`, {
+        email,
+        password,
+      });
+
+      Alert.alert('Success', response.data.message);
       navigation.navigate('UserLogin');
     } catch (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Error', error.response?.data?.error || 'Signup failed');
     }
   };
 

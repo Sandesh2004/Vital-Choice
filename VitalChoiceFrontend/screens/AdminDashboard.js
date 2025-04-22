@@ -1,9 +1,14 @@
 import { View, Text, Button, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const AdminDashboard = ({}) => {
+const AdminDashboard = ({setUserLoggedIn, setIsAdmin}) => {
   const handleLogout = async () => {
-    await AsyncStorage.removeItem('isAdmin');
+    await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('isAdmin');
+      
+      // Reset the state
+      setUserLoggedIn(false);
+      setIsAdmin(false);
   };
 
   return (

@@ -1,24 +1,50 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
-import { auth } from '../firebaseConfig';
-import { signOut } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ProfileForm from './ProfileForm';
 
+const UserDashboard = ({ setUserLoggedIn, setIsAdmin }) => {
+  const [profileCreated, setProfileCreated] = useState(false);
+  const [profileData, setProfileData] = useState(null);
 
-const UserDashboard = () => {
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('isAdmin'); // ensure admin flag is cleared
-      await signOut(auth); // this will trigger onAuthStateChanged
+      await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('isAdmin');
+      setUserLoggedIn(false);
+      setIsAdmin(false);
     } catch (error) {
       console.error("Logout error:", error);
     }
   };
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const storedProfile = await AsyncStorage.getItem('profile');
+      if (storedProfile) {
+        setProfileData(JSON.parse(storedProfile));
+        setProfileCreated(true);
+      }
+    };
+    fetchProfile();
+  }, []);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Your Dashboard!</Text>
-      <Button title="Logout" onPress={handleLogout} />
+      {!profileCreated ? (
+        <ProfileForm onSubmit={data => {
+          setProfileData(data);
+          setProfileCreated(true);
+        }} />
+      ) : (
+        <>
+          <Text style={styles.title}>Your Profile</Text>
+          <Text>Name: {profileData.name}</Text>
+          <Text>Age: {profileData.age}</Text>
+          {/* Add other profile fields here */}
+          <Button title="Logout" onPress={handleLogout} />
+        </>
+      )}
     </View>
   );
 };
@@ -26,6 +52,6 @@ const UserDashboard = () => {
 export default UserDashboard;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 22, marginBottom: 20 },
+  container: { flex: 1, padding: 20 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
 });

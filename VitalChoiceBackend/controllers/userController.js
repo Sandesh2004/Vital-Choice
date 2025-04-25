@@ -60,5 +60,65 @@ const validateToken = async(req, res) => {
   }
 };
 
-module.exports = {registerUser, loginUser, validateToken};
+// Middleware to verify Firebase ID token
+const authenticate = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Missing or invalid token' });
+  }
+
+  const idToken = authHeader.split('Bearer ')[1];
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.uid = decodedToken.uid; // attach UID to request
+    next();
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    res.status(403).json({ message: 'Unauthorized' });
+  }
+};
+
+const createProfile = async (req, res) => {
+    try {
+        const profile = req.body;
+    
+        if (!profile || !profile.name || !profile.phone) {
+          return res.status(400).json({ message: 'Missing required fields' });
+        }
+    
+        const profileData = {
+          ...profile,
+          uid: req.uid,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+    
+        // Save profile with UID as document ID (ensures 1 profile per user)
+        await admin.firestore().collection('profiles').doc(req.uid).set(profileData);
+    
+        res.json({ message: 'Profile saved successfully' });
+      } catch (error) {
+        console.error('Error saving profile:', error);
+        res.status(500).json({ message: 'Server error' });
+      }
+};
+
+const fetchProfile = async (req, res) => {
+  try {
+    const docRef = admin.firestore().collection('profiles').doc(req.uid);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+
+    return res.json(doc.data());
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = {registerUser, loginUser, validateToken, authenticate, createProfile, fetchProfile};
 

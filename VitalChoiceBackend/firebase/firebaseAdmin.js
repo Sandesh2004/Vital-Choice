@@ -4,6 +4,7 @@ const serviceAccount = require("./tobacco-rehab-app-firebase-adminsdk-fbsvc-ad65
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
+  projectId: serviceAccount.project_id
 });
 
 const db = admin.firestore(); // If using Firestore

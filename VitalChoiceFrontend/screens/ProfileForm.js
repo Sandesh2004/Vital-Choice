@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ScrollView, TouchableOpacity  } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '../config';
 
 const countries = ["India", "United States", "Canada", "Australia", "Germany"];
 const countryCodes = { India: '+91', US: '+1', Canada: '+1', Australia: '+61', Germany: '+49' };
@@ -31,10 +32,40 @@ const ProfileForm = ({ onSubmit }) => {
   };
 
   const handleSubmit = async () => {
-    if (!declaration) return alert('You must confirm the declaration.');
-    await AsyncStorage.setItem('profile', JSON.stringify(form));
-    onSubmit(form);
-  };
+  if (!declaration) return alert('You must confirm the declaration.');
+
+  try {
+    const idToken = await AsyncStorage.getItem('authToken');
+    const response = await fetch(`${BASE_URL}/api/user/create-profile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(form),
+    });
+
+    const text = await response.text(); // fallback for error pages
+
+    try {
+      const result = JSON.parse(text);
+
+      if (response.ok) {
+        alert('Profile saved successfully!');
+        onSubmit(form);
+      } else {
+        alert(`Error: ${result.message || 'Something went wrong.'}`);
+      }
+    } catch (error) {
+      console.error('JSON parse failed:', error, '\nRaw:', text);
+      alert('Unexpected response from server.');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Failed to submit profile. Please try again.');
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>

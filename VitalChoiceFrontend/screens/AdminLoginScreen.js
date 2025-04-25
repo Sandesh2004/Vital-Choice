@@ -20,6 +20,7 @@ const AdminLoginScreen = ({setIsAdmin }) => {
       const data = await res.json();
       if (res.ok) {
         await AsyncStorage.setItem('isAdmin', 'true');
+        await AsyncStorage.setItem('authToken', data.token);
         Alert.alert('Success', 'Login successful ✅');
         setIsAdmin(true);
       } else {

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import axios from 'axios';
 import { BASE_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
-
 const UserLoginScreen = ({ navigation, setUserLoggedIn }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async () => {
+    setLoading(true);
+    setErrorMessage('');
     try {
       const response = await axios.post(`${BASE_URL}/api/user/login`, {
         email,
@@ -22,55 +23,211 @@ const UserLoginScreen = ({ navigation, setUserLoggedIn }) => {
       Alert.alert('Success', 'Logged in successfully!');
       setUserLoggedIn(true);
     } catch (error) {
-      Alert.alert('Error', error.response?.data?.error || 'Invalid Credentials');
+      setErrorMessage(error.response?.data?.error || 'Invalid Credentials');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>User Login</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor="#3498DB" barStyle="light-content" />
+      
+      <View style={styles.header}>
+        <Image
+          source={require('../assets/icon.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.headerTitle}>Vital Choice</Text>
+      </View>
+      
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidView}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.container}>
+            <View style={styles.formContainer}>
+              <Text style={styles.heading}>User Login</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email"
+                  placeholderTextColor="#999"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#999"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                />
+              </View>
 
-      <TouchableOpacity
-        style={styles.switchPage}
-        onPress={() => navigation.navigate('UserSignup')}>
-        <Text style={styles.switchText}>Don't have an account? Sign up</Text>
-      </TouchableOpacity>
-    </View>
+              {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Login</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.switchPage}
+                onPress={() => navigation.navigate('UserSignup')}>
+                <Text style={styles.switchText}>Don't have an account? <Text style={styles.switchTextBold}>Sign up</Text></Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.switchPage}
+                onPress={() => navigation.navigate('RoleSelection')}>
+                <Text style={styles.switchText}>Back to <Text style={styles.switchTextBold}>Role Selection</Text></Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 export default UserLoginScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  heading: { fontSize: 24, marginBottom: 20 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F7F9FC',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3498DB',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 10,
+  },
+  logo: {
+    width: 40,
+    height: 40,
+  },
+  keyboardAvoidView: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+  },
+  formContainer: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    alignItems: 'center',
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 25,
+    alignSelf: 'flex-start',
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 8,
+    paddingLeft: 5,
+  },
   input: {
-    width: '80%', padding: 15, borderWidth: 1,
-    borderColor: '#ccc', borderRadius: 10, marginBottom: 20,
+    width: '100%',
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    backgroundColor: '#F8F8F8',
+    fontSize: 16,
+    color: '#333',
+  },
+  errorText: {
+    color: '#ff4d4d',
+    marginBottom: 15,
+    fontWeight: '600',
+    alignSelf: 'flex-start',
   },
   button: {
-    backgroundColor: '#007AFF', padding: 15, borderRadius: 10,
+    backgroundColor: '#3498DB',
+    paddingVertical: 16,
+    borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
+    shadowColor: '#3498DB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
-  buttonText: { color: '#fff', fontSize: 18 },
-  switchPage: { marginTop: 20 },
-  switchText: { color: '#007AFF' },
+  buttonDisabled: {
+    backgroundColor: '#7baaf7',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  switchPage: {
+    marginTop: 25,
+  },
+  switchText: {
+    color: '#666',
+    fontSize: 16,
+  },
+  switchTextBold: {
+    color: '#3498DB',
+    fontWeight: '700',
+  }
 });

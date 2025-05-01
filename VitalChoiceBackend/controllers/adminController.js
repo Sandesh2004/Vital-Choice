@@ -51,4 +51,24 @@ const getProfileById = async (req, res) => {
   }
 };
 
-module.exports = { loginDoctor, getAllProfiles, getProfileById };
+const updateProfileById = async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const profileData = req.body;
+    
+    // Add timestamp
+    profileData.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    
+    await admin.firestore().collection('profiles').doc(uid).update(profileData);
+    
+    return res.status(200).json({ 
+      message: 'Profile updated successfully',
+      uid
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+module.exports = { loginDoctor, getAllProfiles, getProfileById, updateProfileById };

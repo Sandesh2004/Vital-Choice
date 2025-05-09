@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView,ImageBackground, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../config';
+import { useLanguage } from '../center_for_languages';
 
 const countries = ["India", "United States", "Canada", "Australia", "Germany"];
 const countryCodes = { India: '+91', US: '+1', Canada: '+1', Australia: '+61', Germany: '+49' };
 
 const ProfileForm = ({ onSubmit }) => {
+  const { t } = useLanguage();
+
   const [form, setForm] = useState({
     name: '', age: '', sex: '', nationality: 'India',
     aadhar: '', address: '', phone: '', email: '',
@@ -38,17 +41,20 @@ const ProfileForm = ({ onSubmit }) => {
   const handleNext = () => {
     if (form.name && form.age && form.sex && form.nationality && form.address && form.phone && form.maritalStatus && form.occupation && form.income) {
       if (form.nationality === 'India' && !form.aadhar) {
-        alert('Aadhar is required for Indian nationality.');
+        Alert.alert(t('error'), t('aadharRequired'));
         return;
       }
       setShowPartB(true);
     } else {
-      alert('Please fill all required fields.');
+      Alert.alert(t('error'), t('fillAllFields'));
     }
   };
 
   const handleSubmit = async () => {
-    if (!declaration) return alert('You must confirm the declaration.');
+    if (!declaration) {
+      Alert.alert(t('error'), t('confirmDeclaration'));
+      return;
+    }
 
     try {
       const idToken = await AsyncStorage.getItem('authToken');
@@ -67,18 +73,18 @@ const ProfileForm = ({ onSubmit }) => {
         const result = JSON.parse(text);
 
         if (response.ok) {
-          alert('Profile saved successfully!');
+          Alert.alert(t('success'), t('profileSaved'));
           onSubmit(form);
         } else {
-          alert(`Error: ${result.message || 'Something went wrong.'}`);
+          Alert.alert(t('error'), result.message || t('somethingWentWrong'));
         }
       } catch (error) {
         console.error('JSON parse failed:', error, '\nRaw:', text);
-        alert('Unexpected response from server.');
+        Alert.alert(t('error'), t('unexpectedResponse'));
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to submit profile. Please try again.');
+      Alert.alert(t('error'), t('failedToSubmit'));
     }
   };
 
@@ -90,439 +96,635 @@ const ProfileForm = ({ onSubmit }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        {!showPartB ? (
-          <>
-            <View style={styles.formSection}>
-              <View style={styles.formHeader}>
-                <Text style={styles.formHeaderText}>Personal Information</Text>
-                <Text style={styles.title}>Profile Setup - Part A</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor="#3498DB" barStyle="light-content" />
+      <ImageBackground
+              source={require('../assets/background.jpg')}
+              style={styles.backgroundImage}
+              resizeMode="cover"
+            >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.container}>
+          {!showPartB ? (
+            <>
+              <View style={styles.formSection}>
+                <View style={styles.formHeader}>
+                  <Text style={styles.formHeaderText}>{t('personalInformation')}</Text>
+                </View>
+                <Text style={styles.title}>{t('profileSetup')} - {t('partA')}</Text>
 
-                <Text style={styles.label}>Name <Text style={styles.required}>*</Text></Text>
-                <TextInput style={styles.input} onChangeText={val => handleChange('name', val)} />
-
-                <Text style={styles.label}>Age <Text style={styles.required}>*</Text></Text>
-                <TextInput keyboardType="numeric" style={styles.input} onChangeText={val => handleChange('age', val)} />
-
-                <Text style={styles.label}>Sex <Text style={styles.required}>*</Text></Text>
-                <View style={styles.radioGroup}>
-                  {['Male', 'Female', 'Other'].map(option => (
-                    <Text key={option} onPress={() => handleChange('sex', option)} style={styles.radio}>
-                      {form.sex === option ? '🔘' : '⚪'} {option}
-                    </Text>
-                  ))}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('name')} <Text style={styles.required}>*</Text></Text>
+                  <TextInput 
+                    style={styles.input} 
+                    onChangeText={val => handleChange('name', val)}
+                    placeholder={t('name')}
+                    placeholderTextColor="#999" 
+                  />
                 </View>
 
-                <Text style={styles.label}>Nationality <Text style={styles.required}>*</Text></Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={form.nationality}
-                    onValueChange={val => handleChange('nationality', val)}
-                    style={styles.picker}
-                  >
-                    {countries.map(c => <Picker.Item key={c} label={c} value={c} />)}
-                  </Picker>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('age')} <Text style={styles.required}>*</Text></Text>
+                  <TextInput 
+                    keyboardType="numeric" 
+                    style={styles.input} 
+                    onChangeText={val => handleChange('age', val)}
+                    placeholder={t('age')}
+                    placeholderTextColor="#999" 
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('sex')} <Text style={styles.required}>*</Text></Text>
+                  <View style={styles.radioGroup}>
+                    {[t('male'), t('female'), t('other')].map(option => (
+                      <TouchableOpacity 
+                        key={option} 
+                        onPress={() => handleChange('sex', option)}
+                        style={[styles.radioOption, form.sex === option && styles.radioSelected]}
+                      >
+                        <Text style={[styles.radioText, form.sex === option && styles.radioTextSelected]}>
+                          {option}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('nationality')} <Text style={styles.required}>*</Text></Text>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={form.nationality}
+                      onValueChange={val => handleChange('nationality', val)}
+                      style={styles.picker}
+                    >
+                      {countries.map(c => <Picker.Item key={c} label={c} value={c} />)}
+                    </Picker>
+                  </View>
                 </View>
 
                 {form.nationality === 'India' && (
-                  <>
-                    <Text style={styles.label}>Aadhar Number <Text style={styles.required}>*</Text></Text>
-                    <TextInput keyboardType="numeric" style={styles.input} onChangeText={val => handleChange('aadhar', val)} />
-                  </>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>{t('aadharNumber')} <Text style={styles.required}>*</Text></Text>
+                    <TextInput 
+                      keyboardType="numeric" 
+                      style={styles.input} 
+                      onChangeText={val => handleChange('aadhar', val)}
+                      placeholder={t('aadharNumber')}
+                      placeholderTextColor="#999"
+                      maxLength={12}
+                    />
+                  </View>
                 )}
 
-                <Text style={styles.label}>Address <Text style={styles.required}>*</Text></Text>
-                <TextInput style={styles.input} onChangeText={val => handleChange('address', val)} />
-
-                <Text style={styles.label}>Phone Number <Text style={styles.required}>*</Text></Text>
-                <TextInput keyboardType="phone-pad" style={styles.input} placeholder={`e.g. ${countryCodes[form.nationality] || ''}XXXXXXXXXX`} onChangeText={val => handleChange('phone', val)} />
-
-                <Text style={styles.label}>Email (Optional)</Text>
-                <TextInput style={styles.input} onChangeText={val => handleChange('email', val)} />
-
-                <Text style={styles.label}>Marital Status <Text style={styles.required}>*</Text></Text>
-                <Picker selectedValue={form.maritalStatus} onValueChange={val => handleChange('maritalStatus', val)}>
-                  {["Unmarried", "Married", "Widowed", "Separated or divorced", "Not applicable"].map(option => (
-                    <Picker.Item key={option} label={option} value={option} />
-                  ))}
-                </Picker>
-
-                <Text style={styles.label}>Occupation <Text style={styles.required}>*</Text></Text>
-                <Picker selectedValue={form.occupation} onValueChange={val => handleChange('occupation', val)}>
-                  {["Professional or Semi-professional", "Skilled, semi-skilled or unskilled worker", "Retired", "Housewife", "Student", "Other", "Unemployed"].map(option => (
-                    <Picker.Item key={option} label={option} value={option} />
-                  ))}
-                </Picker>
-                {form.occupation === 'Other' && (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Please specify your occupation"
-                    onChangeText={val => handleChange('occupationOther', val)}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('address')} <Text style={styles.required}>*</Text></Text>
+                  <TextInput 
+                    style={[styles.input, styles.textArea]} 
+                    onChangeText={val => handleChange('address', val)}
+                    placeholder={t('address')}
+                    placeholderTextColor="#999"
+                    multiline={true}
+                    numberOfLines={3}
                   />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('phoneNumber')} <Text style={styles.required}>*</Text></Text>
+                  <TextInput 
+                    keyboardType="phone-pad" 
+                    style={styles.input} 
+                    placeholder={`${countryCodes[form.nationality] || ''}XXXXXXXXXX`}
+                    placeholderTextColor="#999" 
+                    onChangeText={val => handleChange('phone', val)}
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('email')}</Text>
+                  <TextInput 
+                    style={styles.input} 
+                    onChangeText={val => handleChange('email', val)}
+                    placeholder={t('email')}
+                    placeholderTextColor="#999"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('maritalStatus')} <Text style={styles.required}>*</Text></Text>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={form.maritalStatus}
+                      onValueChange={val => handleChange('maritalStatus', val)}
+                      style={styles.picker}
+                    >
+                      <Picker.Item label={t('selectMaritalStatus')} value="" />
+                      <Picker.Item label={t('unmarried')} value={t('unmarried')} />
+                      <Picker.Item label={t('married')} value={t('married')} />
+                      <Picker.Item label={t('widowed')} value={t('widowed')} />
+                      <Picker.Item label={t('separatedOrDivorced')} value={t('separatedOrDivorced')} />
+                      <Picker.Item label={t('notApplicable')} value={t('notApplicable')} />
+                    </Picker>
+                  </View>
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('occupation')} <Text style={styles.required}>*</Text></Text>
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={form.occupation}
+                      onValueChange={val => handleChange('occupation', val)}
+                      style={styles.picker}
+                    >
+                      <Picker.Item label={t('selectOccupation')} value="" />
+                      <Picker.Item label={t('professional')} value={t('professional')} />
+                      <Picker.Item label={t('skilled')} value={t('skilled')} />
+                      <Picker.Item label={t('retired')} value={t('retired')} />
+                      <Picker.Item label={t('housewife')} value={t('housewife')} />
+                      <Picker.Item label={t('student')} value={t('student')} />
+                      <Picker.Item label={t('unemployed')} value={t('unemployed')} />
+                      <Picker.Item label={t('otherOccupation')} value={t('otherOccupation')} />
+                    </Picker>
+                  </View>
+                </View>
+
+                {form.occupation === t('otherOccupation') && (
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>{t('specifyOccupation')} <Text style={styles.required}>*</Text></Text>
+                    <TextInput 
+                      style={styles.input} 
+                      onChangeText={val => handleChange('occupationOther', val)}
+                      placeholder={t('specifyOccupation')}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
                 )}
 
-                <Text style={styles.label}>Average Monthly Income <Text style={styles.required}>*</Text></Text>
-                <TextInput keyboardType="numeric" style={styles.input} onChangeText={val => handleChange('income', val)} />
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('monthlyIncome')} <Text style={styles.required}>*</Text></Text>
+                  <TextInput 
+                    keyboardType="numeric" 
+                    style={styles.input} 
+                    onChangeText={val => handleChange('income', val)}
+                    placeholder={t('monthlyIncome')}
+                    placeholderTextColor="#999"
+                  />
+                </View>
 
-                <TouchableOpacity style={styles.button} onPress={handleNext}>
-                  <Text style={styles.buttonText}>Next</Text>
+                <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+                  <Text style={styles.nextButtonText}>{t('next')}</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </>
-        ) : (
-          <>
-                <View style={styles.formSection}>
-                  <View style={styles.formHeader}>
-                    <Text style={styles.formHeaderText}>Personal Information</Text>
+            </>
+          ) : (
+            <>
+              <View style={styles.formSection}>
+                <View style={styles.formHeader}>
+                  <Text style={styles.formHeaderText}>{t('tobaccoUsageInformation')}</Text>
+                </View>
+                <Text style={styles.title}>{t('profileSetup')} - {t('partB')}</Text>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('typesOfTobacco')} <Text style={styles.required}>*</Text></Text>
+                  <View style={styles.checkboxGroup}>
+                    {[
+                      t('chewingTobacco'), t('gutka'), t('khaini'), 
+                      t('paan'), t('mawa'), t('misri'), t('gul'), t('otherTobaccoType')
+                    ].map(option => (
+                      <TouchableOpacity 
+                        key={option} 
+                        onPress={() => toggleMultiSelect('tobaccoTypes', option)}
+                        style={styles.checkboxRow}
+                      >
+                        <View style={[
+                          styles.checkbox, 
+                          form.tobaccoTypes.includes(option) && styles.checkboxSelected
+                        ]} />
+                        <Text style={styles.checkboxLabel}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                <Text style={styles.title}>Profile Setup - Part B</Text>
-
-                <Text style={styles.label}>Types of Tobacco Used <Text style={styles.required}>*</Text></Text>
-                <View style={styles.checkboxContainer}>
-                  {['Chewing tobacco', 'Gutka', 'Khaini', 'Paan', 'Mawa', 'Misri', 'Gul', 'Other'].map(option => (
-                    <TouchableOpacity key={option} onPress={() => toggleMultiSelect('tobaccoTypes', option)} style={styles.checkboxOption} >
-                      <Text>{form.tobaccoTypes.includes(option) ? '☑️' : '⬜️'} {option}</Text>
-                    </TouchableOpacity>
-                  ))}
                 </View>
-                {form.tobaccoTypes.includes('Other') && (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Specify other tobacco type"
-                    onChangeText={val => handleChange('otherTobaccoType', val)}
-                  />
+
+                {form.tobaccoTypes.includes(t('otherTobaccoType')) && (
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>{t('specifyTobaccoType')} <Text style={styles.required}>*</Text></Text>
+                    <TextInput 
+                      style={styles.input} 
+                      onChangeText={val => handleChange('otherTobaccoType', val)}
+                      placeholder={t('specifyTobaccoType')}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
                 )}
 
-                <Text style={styles.label}>Frequency of Usage Per Day <Text style={styles.required}>*</Text></Text>
-                <TextInput keyboardType="numeric" style={styles.input} placeholder="e.g. 10" onChangeText={val => handleChange('frequencyPerDay', val)} />
-
-                <Text style={styles.label}>Usual Craving Timings <Text style={styles.required}>*</Text></Text>
-                <View style={styles.checkboxContainer}>
-                  {['Morning', 'After Meals', 'While Working', 'Before Sleep', 'Other'].map(option => (
-                    <TouchableOpacity key={option} onPress={() => toggleMultiSelect('cravingTimings', option)} style={styles.checkboxOption}>
-                      <Text>{form.cravingTimings.includes(option) ? '☑️' : '⬜️'} {option}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                {form.cravingTimings.includes('Other') && (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Specify other craving timing"
-                    onChangeText={val => handleChange('otherCravingTiming', val)}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('frequencyPerDay')} <Text style={styles.required}>*</Text></Text>
+                  <TextInput 
+                    keyboardType="numeric" 
+                    style={styles.input} 
+                    onChangeText={val => handleChange('frequencyPerDay', val)}
+                    placeholder="e.g. 10"
+                    placeholderTextColor="#999"
                   />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('cravingTimings')} <Text style={styles.required}>*</Text></Text>
+                  <View style={styles.checkboxGroup}>
+                    {[
+                      t('morning'), t('afterMeals'), t('whileWorking'), 
+                      t('beforeSleep'), t('otherTiming')
+                    ].map(option => (
+                      <TouchableOpacity 
+                        key={option} 
+                        onPress={() => toggleMultiSelect('cravingTimings', option)}
+                        style={styles.checkboxRow}
+                      >
+                        <View style={[
+                          styles.checkbox, 
+                          form.cravingTimings.includes(option) && styles.checkboxSelected
+                        ]} />
+                        <Text style={styles.checkboxLabel}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {form.cravingTimings.includes(t('otherTiming')) && (
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>{t('specifyTiming')} <Text style={styles.required}>*</Text></Text>
+                    <TextInput 
+                      style={styles.input} 
+                      onChangeText={val => handleChange('otherCravingTiming', val)}
+                      placeholder={t('specifyTiming')}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
                 )}
 
-                <Text style={styles.label}>Years of Tobacco Use <Text style={styles.required}>*</Text></Text>
-                <TextInput keyboardType="numeric" style={styles.input} placeholder="e.g. 5" onChangeText={val => handleChange('yearsUsing', val)} />
-
-                <Text style={styles.label}>Reason for Quitting <Text style={styles.required}>*</Text></Text>
-                <View style={styles.checkboxContainer}>
-                  {['Health', 'Family', 'Financial reasons', 'Self-respect', 'Other'].map(option => (
-                    <TouchableOpacity 
-                      key={option} 
-                      onPress={() => toggleMultiSelect('quittingReason', option)}
-                      style={styles.checkboxOption}
-                    >
-                      <Text style={styles.checkboxText}>
-                        {form.quittingReason.includes(option) ? '☑️' : '⬜️'} {option}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                {form.quittingReason.includes('Other') && (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Specify reason"
-                    onChangeText={val => handleChange('quittingReasonOther', val)}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('yearsOfUse')} <Text style={styles.required}>*</Text></Text>
+                  <TextInput 
+                    keyboardType="numeric" 
+                    style={styles.input} 
+                    onChangeText={val => handleChange('yearsUsing', val)}
+                    placeholder="e.g. 5"
+                    placeholderTextColor="#999"
                   />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('reasonForQuitting')} <Text style={styles.required}>*</Text></Text>
+                  <View style={styles.checkboxGroup}>
+                    {[
+                      t('health'), t('family'), t('financialReasons'), 
+                      t('selfRespect'), t('otherReason')
+                    ].map(option => (
+                      <TouchableOpacity 
+                        key={option} 
+                        onPress={() => toggleMultiSelect('quittingReason', option)}
+                        style={styles.checkboxRow}
+                      >
+                        <View style={[
+                          styles.checkbox, 
+                          form.quittingReason.includes(option) && styles.checkboxSelected
+                        ]} />
+                        <Text style={styles.checkboxLabel}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {form.quittingReason.includes(t('otherReason')) && (
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>{t('specifyReason')} <Text style={styles.required}>*</Text></Text>
+                    <TextInput 
+                      style={styles.input} 
+                      onChangeText={val => handleChange('quittingReasonOther', val)}
+                      placeholder={t('specifyReason')}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
                 )}
 
-                <Text style={styles.label}>Confidence in Quitting (1-10) <Text style={styles.required}>*</Text></Text>
-                <TextInput keyboardType="numeric" style={styles.input} placeholder="e.g. 7" onChangeText={val => handleChange('confidenceLevel', val)} />
-
-                <Text style={styles.label}>Health Issues (if any)</Text>
-                <View style={styles.checkboxContainer}>
-                  {['Cough', 'Breathing Problem', 'Heart Disease', 'Cancer', 'Other'].map(option => (
-                    <TouchableOpacity key={option} onPress={() => toggleMultiSelect('healthIssues', option)} style={styles.checkboxOption}>
-                      <Text>{form.healthIssues.includes(option) ? '☑️' : '⬜️'} {option}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                {form.healthIssues.includes('Other') && (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Specify health issues"
-                    onChangeText={val => handleChange('healthIssuesOther', val)}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('confidenceLevel')} <Text style={styles.required}>*</Text></Text>
+                  <TextInput 
+                    keyboardType="numeric" 
+                    style={styles.input} 
+                    onChangeText={val => handleChange('confidenceLevel', val)}
+                    placeholder="e.g. 7"
+                    placeholderTextColor="#999"
+                    maxLength={2}
                   />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('healthIssues')}</Text>
+                  <View style={styles.checkboxGroup}>
+                    {[
+                      t('cough'), t('breathingProblem'), t('heartDisease'), 
+                      t('cancer'), t('otherHealthIssue')
+                    ].map(option => (
+                      <TouchableOpacity 
+                        key={option} 
+                        onPress={() => toggleMultiSelect('healthIssues', option)}
+                        style={styles.checkboxRow}
+                      >
+                        <View style={[
+                          styles.checkbox, 
+                          form.healthIssues.includes(option) && styles.checkboxSelected
+                        ]} />
+                        <Text style={styles.checkboxLabel}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {form.healthIssues.includes(t('otherHealthIssue')) && (
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>{t('specifyHealthIssue')}</Text>
+                    <TextInput 
+                      style={styles.input} 
+                      onChangeText={val => handleChange('healthIssuesOther', val)}
+                      placeholder={t('specifyHealthIssue')}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
                 )}
 
-                <Text style={styles.label}>Tobacco Triggers <Text style={styles.required}>*</Text></Text>
-                <View style={styles.checkboxContainer}>
-                  {['Stress', 'Peer Pressure', 'Habit', 'Boredom', 'Other'].map(option => (
-                    <TouchableOpacity key={option} onPress={() => toggleMultiSelect('triggers', option)} style={styles.checkboxOption}>
-                      <Text>{form.triggers.includes(option) ? '☑️' : '⬜️'} {option}</Text>
-                    </TouchableOpacity>
-                  ))}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('tobaccoTriggers')} <Text style={styles.required}>*</Text></Text>
+                  <View style={styles.checkboxGroup}>
+                    {[
+                      t('stress'), t('peerPressure'), t('habit'), 
+                      t('boredom'), t('otherTrigger')
+                    ].map(option => (
+                      <TouchableOpacity 
+                        key={option} 
+                        onPress={() => toggleMultiSelect('triggers', option)}
+                        style={styles.checkboxRow}
+                      >
+                        <View style={[
+                          styles.checkbox, 
+                          form.triggers.includes(option) && styles.checkboxSelected
+                        ]} />
+                        <Text style={styles.checkboxLabel}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
-                {form.triggers.includes('Other') && (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Specify other triggers"
-                    onChangeText={val => handleChange('otherTrigger', val)}
-                  />
+
+                {form.triggers.includes(t('otherTrigger')) && (
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>{t('specifyTrigger')} <Text style={styles.required}>*</Text></Text>
+                    <TextInput 
+                      style={styles.input} 
+                      onChangeText={val => handleChange('otherTrigger', val)}
+                      placeholder={t('specifyTrigger')}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
                 )}
 
-                <Text style={styles.label}>Average Monthly Tobacco Spending (in your currency) <Text style={styles.required}>*</Text></Text>
-                <TextInput keyboardType="numeric" style={styles.input} placeholder="e.g. 500" onChangeText={val => handleChange('tobaccoSpending', val)} />
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('tobaccoSpending')} <Text style={styles.required}>*</Text></Text>
+                  <TextInput 
+                    keyboardType="numeric" 
+                    style={styles.input} 
+                    onChangeText={val => handleChange('tobaccoSpending', val)}
+                    placeholder="e.g. 10"
+                    placeholderTextColor="#999"
+                  />
+                </View>
 
                 <View style={styles.declarationContainer}>
-                  <Text style={styles.declarationText}>
-                    I hereby declare that all the information provided is true and correct to the best of my knowledge.
-                  </Text>
                   <TouchableOpacity 
-                    onPress={() => setDeclaration(!declaration)} 
                     style={styles.checkboxRow}
+                    onPress={() => setDeclaration(!declaration)}
                   >
-                    <Text style={styles.checkboxText}>
-                      {declaration ? '☑️' : '⬜️'} I agree
-                    </Text>
+                    <View style={[
+                      styles.checkbox, 
+                      declaration && styles.checkboxSelected
+                    ]} />
+                    <Text style={styles.declarationText}>{t('declaration')}</Text>
                   </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                  <Text style={styles.buttonText}>Submit</Text>
-                </TouchableOpacity>
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity style={styles.backButton} onPress={() => setShowPartB(false)}>
+                    <Text style={styles.backButtonText}>{t('back')}</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.submitButton, !declaration && styles.submitButtonDisabled]} 
+                    onPress={handleSubmit}
+                    disabled={!declaration}
+                  >
+                    <Text style={styles.submitButtonText}>{t('submit')}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-          </>
-        )}
-      </View>
-    </ScrollView>
+            </>
+          )}
+        </View>
+      </ScrollView>
+      </ImageBackground>
+    </SafeAreaView>
+    
   );
 };
 
-export default ProfileForm;
-
-
 const styles = StyleSheet.create({
-  scrollContainer: { 
-    flexGrow: 1, 
+  safeArea: {
+    flex: 1,
     backgroundColor: '#F7F9FC',
   },
-  container: { 
-    flex: 1, 
-    padding: 20,
-    paddingBottom: 40,
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 30,
   },
-  title: { 
-    fontSize: 28, 
-    fontWeight: '700',
-    marginBottom: 25, 
-    textAlign: 'center',
-    color: '#2C3E50',
-    borderBottomWidth: 2,
-    borderBottomColor: '#3498DB',
-    paddingBottom: 15,
-    marginTop: 10,
+  container: {
+    flex: 1,
+    padding: 16,
   },
-  label: { 
-    fontSize: 16, 
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#34495E',
-    letterSpacing: 0.3,
-  },
-  required: { 
-    color: '#E74C3C', 
-    fontWeight: '700',
-  },
-  input: { 
-    borderWidth: 1, 
-    borderColor: '#BDC3C7', 
-    marginBottom: 20, 
-    padding: 14, 
+  formSection: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 12,
-    backgroundColor: '#fff',
-    fontSize: 16,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 20,
   },
-  radioGroup: { 
-    flexDirection: 'row', 
-    marginBottom: 20, 
-    flexWrap: 'wrap',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#BDC3C7',
+  formHeader: {
+    backgroundColor: '#3498DB',
+    marginHorizontal: -20,
+    marginTop: -20,
+    marginBottom: 20,
+    padding: 15,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
-  radio: { 
-    marginRight: 20, 
-    marginBottom: 10,
+  formHeaderText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#2C3E50',
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  label: {
     fontSize: 16,
+    marginBottom: 8,
+    fontWeight: '500',
     color: '#34495E',
-    padding: 8,
   },
-  checkboxOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 5,
-    backgroundColor: '#fff',
+  required: {
+    color: '#E74C3C',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     borderRadius: 8,
-    marginVertical: 3,
-    borderWidth: 1,
-    borderColor: '#ECF0F1',
-  },
-  checkboxText: {
+    padding: 12,
     fontSize: 16,
-    marginLeft: 8,
-    color: '#34495E',
+    backgroundColor: '#F8F8F8',
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#BDC3C7',
-    borderRadius: 12,
-    marginBottom: 20,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-    overflow: 'hidden',
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    backgroundColor: '#F8F8F8',
   },
   picker: {
     height: 50,
-    backgroundColor: '#fff',
   },
-  buttonContainer: {
-    marginTop: 15,
-    marginBottom: 20,
+  backgroundImage: {
+    flex: 1,
+    justifyContent: 'center',
+    
   },
-  button: {
+  radioGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  radioOption: {
+    flex: 1,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    backgroundColor: '#F8F8F8',
+  },
+  radioSelected: {
     backgroundColor: '#3498DB',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#3498DB',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-    marginTop: 10,
+    borderColor: '#3498DB',
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 18,
-    letterSpacing: 0.5,
-  },
-  backButton: {
-    backgroundColor: '#F39C12',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#F39C12',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-    marginBottom: 15,
-    marginTop: 10,
-  },
-  submitButton: {
-    backgroundColor: '#2ECC71',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#2ECC71',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-    marginTop: 10,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginTop: 25,
-    marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#3498DB',
-    paddingBottom: 8,
-  },
-  declarationContainer: {
-    backgroundColor: '#EBF5FB',
-    padding: 18,
-    borderRadius: 12,
-    marginVertical: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#3498DB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  declarationText: {
-    fontSize: 15,
-    lineHeight: 22,
+  radioText: {
     color: '#34495E',
-    marginBottom: 12,
-    fontStyle: 'italic',
+  },
+  radioTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  checkboxGroup: {
+    marginTop: 5,
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 5,
-    backgroundColor: '#fff',
-    padding: 10,
+    marginBottom: 10,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#3498DB',
+    marginRight: 10,
+  },
+  checkboxSelected: {
+    backgroundColor: '#3498DB',
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: '#34495E',
+  },
+  nextButton: {
+    backgroundColor: '#3498DB',
+    padding: 15,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#BDC3C7',
+    alignItems: 'center',
+    marginTop: 20,
   },
-  formSection: {
-    marginBottom: 25,
-    backgroundColor: '#fff',
-    borderRadius: 15,
+  nextButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  declarationContainer: {
+    marginVertical: 20,
+  },
+  declarationText: {
+    fontSize: 14,
+    color: '#34495E',
+    flex: 1,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  backButton: {
+    backgroundColor: '#95A5A6',
     padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#ECF0F1',
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
   },
-  formHeader: {
-    backgroundColor: 'white',
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  submitButton: {
+    backgroundColor: '#27AE60',
     padding: 15,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    marginBottom: 15,
-    marginHorizontal: -15,
-    marginTop: -15,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
+    marginLeft: 10,
   },
-  formHeaderText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+  submitButtonDisabled: {
+    backgroundColor: '#BDC3C7',
   },
-  checkboxContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#BDC3C7',
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
+
+export default ProfileForm;

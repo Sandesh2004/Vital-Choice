@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, FlatList, StyleSheet, Modal, ActivityIndicator, TouchableOpacity, ScrollView, Image, Alert, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, TextInput, FlatList, StyleSheet, Modal, ActivityIndicator,ImageBackground, TouchableOpacity, ScrollView, Image, Alert, SafeAreaView, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { BASE_URL } from '../config';
@@ -101,7 +101,11 @@ const AdminDashboard = ({ setUserLoggedIn, setIsAdmin }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#3498DB" barStyle="light-content" />
-      
+      <ImageBackground
+                    source={require('../assets/img1.jpg')}
+                    style={styles.backgroundImage}
+                    resizeMode="cover"
+           >
       <View style={styles.header}>
         <Image
           source={require('../assets/icon.png')}
@@ -660,6 +664,7 @@ const AdminDashboard = ({ setUserLoggedIn, setIsAdmin }) => {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+      </ImageBackground>
     </SafeAreaView>
   );
 };
@@ -747,6 +752,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 15,
     borderRadius: 8,
+  },
+  backgroundImage: {
+    flex: 1,
+    justifyContent: 'center',
+    
   },
   viewButtonText: {
     color: '#fff',

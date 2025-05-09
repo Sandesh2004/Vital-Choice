@@ -5,6 +5,7 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { BASE_URL } from './config';
+import { LanguageProvider } from './center_for_languages';
 
 // Screens
 import RoleSelectionScreen from './screens/RoleSelectionScreen';
@@ -13,6 +14,8 @@ import UserSignupScreen from './screens/UserSignupScreen';
 import AdminLoginScreen from './screens/AdminLoginScreen';
 import UserDashboard from './screens/UserDashboard';
 import AdminDashboard from './screens/AdminDashboard';
+import UserHomeScreen from './screens/UserHomeScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -70,33 +73,35 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {userLoggedIn ? (
-          <Stack.Screen name="UserDashboard">
-            {props => (
-              <UserDashboard{...props}setUserLoggedIn={setUserLoggedIn}setIsAdmin={setIsAdmin}/>
-            )}
-          </Stack.Screen>
-        ) : isAdmin ? (
-          <Stack.Screen name="AdminDashboard">
-            {props => (
-              <AdminDashboard{...props}setUserLoggedIn={setUserLoggedIn}setIsAdmin={setIsAdmin}/>
-            )}
-          </Stack.Screen>
-        ) : (
-          <>
-            <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
-            <Stack.Screen name="UserLogin">
-              {props => <UserLoginScreen {...props} setUserLoggedIn={setUserLoggedIn} />}
+    <LanguageProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {userLoggedIn ? (
+            <Stack.Screen name="UserHome">
+              {props => (
+                <UserHomeScreen{...props}setUserLoggedIn={setUserLoggedIn}setIsAdmin={setIsAdmin}/>
+              )}
             </Stack.Screen>
-            <Stack.Screen name="UserSignup" component={UserSignupScreen} />
-            <Stack.Screen name="AdminLogin">
-              {props => <AdminLoginScreen {...props} setIsAdmin={setIsAdmin} />}
+          ) : isAdmin ? (
+            <Stack.Screen name="AdminDashboard">
+              {props => (
+                <AdminDashboard{...props}setUserLoggedIn={setUserLoggedIn}setIsAdmin={setIsAdmin}/>
+              )}
             </Stack.Screen>
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+          ) : (
+            <>
+              <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
+              <Stack.Screen name="UserLogin">
+                {props => <UserLoginScreen {...props} setUserLoggedIn={setUserLoggedIn} />}
+              </Stack.Screen>
+              <Stack.Screen name="UserSignup" component={UserSignupScreen} />
+              <Stack.Screen name="AdminLogin">
+                {props => <AdminLoginScreen {...props} setIsAdmin={setIsAdmin} />}
+              </Stack.Screen>
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </LanguageProvider>
   );
 }

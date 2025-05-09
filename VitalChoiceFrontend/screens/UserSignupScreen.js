@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet,ImageBackground, Alert, ActivityIndicator, Image, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import axios from 'axios';
 import { BASE_URL } from '../config';
+import { useLanguage } from '../center_for_languages';
+import LanguageButton from '../components/LanguageButton';
+import LanguageSelector from '../components/LanguageSelector';
 
 const UserSignupScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -9,24 +12,47 @@ const UserSignupScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  
+  // Get translations
+  const { t } = useLanguage();
 
   const handleSignup = async () => {
-    if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match');
+    // Validate inputs
+    if (!email || !password || !confirmPassword) {
+      setErrorMessage(t('allFieldsRequired'));
       return;
     }
+    
+    if (!email.includes('@')) {
+      setErrorMessage(t('validEmailRequired'));
+      return;
+    }
+    
+    if (password.length < 6) {
+      setErrorMessage(t('passwordMinLength'));
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setErrorMessage(t('passwordsDoNotMatch'));
+      return;
+    }
+
     setLoading(true);
     setErrorMessage('');
+    
     try {
       const response = await axios.post(`${BASE_URL}/api/user/register`, {
         email,
         password,
       });
-
-      Alert.alert('Success', response.data.message);
+      
+      Alert.alert(t('success'), t('signupSuccess'));
       navigation.navigate('UserLogin');
     } catch (error) {
-      setErrorMessage(error.response?.data?.error || 'Signup failed');
+      setErrorMessage(error.response?.data?.error || t('signupFailed'));
+      console.log(error.response);
     } finally {
       setLoading(false);
     }
@@ -35,14 +61,26 @@ const UserSignupScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#3498DB" barStyle="light-content" />
-      
+      <ImageBackground
+                    source={require('../assets/background.jpg')}
+                    style={styles.backgroundImage}
+                    resizeMode="cover"
+      >
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
         <Image
           source={require('../assets/icon.png')}
           style={styles.logo}
           resizeMode="contain"
         />
         <Text style={styles.headerTitle}>Vital Choice</Text>
+        
+        <LanguageButton 
+          onPress={() => setLanguageModalVisible(true)} 
+          screen="userSignup"
+        />
       </View>
       
       <KeyboardAvoidingView 
@@ -52,13 +90,14 @@ const UserSignupScreen = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.container}>
             <View style={styles.formContainer}>
-              <Text style={styles.heading}>User Signup</Text>
+              <Text style={styles.heading}>{t('userSignup')}</Text>
+              <Text style={styles.subheading}>{t('createAccount')}</Text>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Email</Text>
+                <Text style={styles.inputLabel}>{t('email')}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your email"
+                  placeholder={t('enterEmail')}
                   placeholderTextColor="#999"
                   value={email}
                   onChangeText={setEmail}
@@ -68,10 +107,10 @@ const UserSignupScreen = ({ navigation }) => {
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Password</Text>
+                <Text style={styles.inputLabel}>{t('password')}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your password"
+                  placeholder={t('enterPassword')}
                   placeholderTextColor="#999"
                   secureTextEntry
                   value={password}
@@ -80,10 +119,10 @@ const UserSignupScreen = ({ navigation }) => {
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Confirm Password</Text>
+                <Text style={styles.inputLabel}>{t('confirmPassword')}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Confirm your password"
+                  placeholder={t('enterConfirmPassword')}
                   placeholderTextColor="#999"
                   secureTextEntry
                   value={confirmPassword}
@@ -101,25 +140,35 @@ const UserSignupScreen = ({ navigation }) => {
                 {loading ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={styles.buttonText}>Sign Up</Text>
+                  <Text style={styles.buttonText}>{t('signup')}</Text>
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.switchPage}
-                onPress={() => navigation.navigate('UserLogin')}>
-                <Text style={styles.switchText}>Already have an account? <Text style={styles.switchTextBold}>Login</Text></Text>
-              </TouchableOpacity>
+              <View style={styles.linksContainer}>
+                <TouchableOpacity
+                  style={styles.switchPage}
+                  onPress={() => navigation.navigate('UserLogin')}>
+                  <Text style={styles.switchText}>{t('alreadyHaveAccount')} <Text style={styles.switchTextBold}>{t('login')}</Text></Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.switchPage}
-                onPress={() => navigation.navigate('RoleSelection')}>
-                <Text style={styles.switchText}>Back to <Text style={styles.switchTextBold}>Role Selection</Text></Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.switchPage}
+                  onPress={() => navigation.navigate('RoleSelection')}>
+                  <Text style={styles.switchText}>{t('backTo')} <Text style={styles.switchTextBold}>{t('roleSelection')}</Text></Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      </ImageBackground>
+      
+      {/* Language Selector Modal */}
+      <LanguageSelector 
+        visible={languageModalVisible}
+        onClose={() => setLanguageModalVisible(false)}
+        screen="userSignup"
+      />
     </SafeAreaView>
   );
 };
@@ -130,6 +179,11 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F7F9FC',
+  },
+  backgroundImage: {
+    flex: 1,
+    justifyContent: 'center',
+    
   },
   header: {
     flexDirection: 'row',
@@ -142,12 +196,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
+    justifyContent: 'space-between',
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
     marginLeft: 10,
+    flex: 1,
   },
   logo: {
     width: 40,
@@ -168,7 +224,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     padding: 25,
     shadowColor: '#000',
@@ -244,5 +300,17 @@ const styles = StyleSheet.create({
   switchTextBold: {
     color: '#3498DB',
     fontWeight: '700',
-  }
+  },
+  linksContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 4,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
 });

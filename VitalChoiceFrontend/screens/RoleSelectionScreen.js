@@ -1,49 +1,132 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, StatusBar, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  SafeAreaView,
+  ImageBackground,
+  StatusBar,
+  Platform,
+  Modal,
+  ScrollView
+} from 'react-native';
+import { useLanguage } from '../center_for_languages';
+
+// ...imports remain unchanged
 
 const RoleSelectionScreen = ({ navigation }) => {
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  const { currentLanguage, changeLanguage, t, availableLanguages } = useLanguage();
+    // Show content after 2 seconds
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setShowContent(true);
+      }, 3000); // 2 seconds delay
+  
+      return () => clearTimeout(timer);
+    }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#3498DB" barStyle="light-content" />
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Image
-            source={require('../assets/icon.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.headerTitle}>Vital Choice</Text>
-        </View>
-        
-        <View style={styles.contentContainer}>
-          <Text style={styles.heading}>Choose Your Role</Text>
-          <Text style={styles.subheading}>Select how you want to access the application</Text>
+      <ImageBackground
+        source={require('../assets/background.jpg')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Image
+              source={require('../assets/icon.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.headerTitle}>Vital Choice</Text>
+            <TouchableOpacity 
+              style={styles.languageButton}
+              onPress={() => setLanguageModalVisible(true)}
+            >
+              <Text style={styles.languageButtonText}>{t('language')}</Text>
+            </TouchableOpacity>
+          </View>
           
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('UserLogin')}
-          >
-            <View style={styles.buttonContent}>
-              <Text style={styles.buttonText}>Login as User</Text>
-              <Text style={styles.buttonDescription}>For tobacco users seeking help</Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.contentContainer}>
+            <Text style={styles.heading}>{t('chooseRole')}</Text>
+            <Text style={styles.subheading}>{t('selectAccess')}</Text>
+            
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => navigation.navigate('UserLogin')}
+            >
+              <View style={styles.buttonContent}>
+                <Text style={styles.buttonText}>{t('loginAsUser')}</Text>
+                <Text style={styles.buttonDescription}>{t('forUsers')}</Text>
+              </View>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.button, styles.adminButton]}
-            onPress={() => navigation.navigate('AdminLogin')}
-          >
-            <View style={styles.buttonContent}>
-              <Text style={styles.buttonText}>Login as Admin</Text>
-              <Text style={styles.buttonDescription}>For healthcare providers</Text>
-            </View>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.adminButton]}
+              onPress={() => navigation.navigate('AdminLogin')}
+            >
+              <View style={styles.buttonContent}>
+                <Text style={styles.buttonText}>{t('loginAsAdmin')}</Text>
+                <Text style={styles.buttonDescription}>{t('forProviders')}</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>{t('footer')}</Text>
+          </View>
         </View>
-        
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Helping you make better choices</Text>
+      </ImageBackground>
+
+      {/* Language Modal */}
+      <Modal
+        visible={languageModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>{t('chooseLanguage')}</Text>
+            <ScrollView style={styles.languageList}>
+              {availableLanguages.map((language) => (
+                <TouchableOpacity
+                  key={language.code}
+                  style={[
+                    styles.languageOption,
+                    currentLanguage === language.code && styles.selectedLanguage
+                  ]}
+                  onPress={() => {
+                    changeLanguage(language.code);
+                    setLanguageModalVisible(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.languageText,
+                      currentLanguage === language.code && styles.selectedLanguageText
+                    ]}
+                  >
+                    {language.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setLanguageModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -57,7 +140,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    //backgroundColor: '#F7F9FC',
+  },
+  backgroundImage: {
+    flex: 1,
+    justifyContent: 'center',
+    
   },
   header: {
     flexDirection: 'row',
@@ -71,11 +159,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
   },
+
   headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
     marginLeft: 10,
+    flex: 1,
   },
   logo: {
     width: 40,
@@ -97,7 +187,7 @@ const styles = StyleSheet.create({
   },
   subheading: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: '#7f8c8d',
     marginBottom: 40,
     textAlign: 'center',
   },
@@ -139,5 +229,76 @@ const styles = StyleSheet.create({
     color: '#7F8C8D',
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  languageButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginLeft: 10,
+  },
+  languageButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    maxHeight: '60%',
+    position: 'relative',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)', // Optional: dark overlay for better contrast
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  languageList: {
+    width: '100%',
+  },
+  languageOption: {
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  selectedLanguage: {
+    backgroundColor: '#f0f8ff',
+  },
+  languageText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  selectedLanguageText: {
+    color: '#3498DB',
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 20,
+    color: '#999',
   }
 });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet,ImageBackground, Alert, ActivityIndicator, Image, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { BASE_URL } from '../config';
 
@@ -39,7 +39,11 @@ const AdminLoginScreen = ({ setIsAdmin }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#3498DB" barStyle="light-content" />
-      
+      <ImageBackground
+              source={require('../assets/background.jpg')}
+              style={styles.backgroundImage}
+              resizeMode="cover"
+     >
       <View style={styles.header}>
         <Image
           source={require('../assets/icon.png')}
@@ -93,6 +97,7 @@ const AdminLoginScreen = ({ setIsAdmin }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      </ImageBackground>
     </SafeAreaView>
   );
 };
@@ -102,7 +107,7 @@ export default AdminLoginScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    //backgroundColor: '#F7F9FC',
   },
   header: {
     flexDirection: 'row',
@@ -141,7 +146,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
     padding: 25,
     shadowColor: '#000',
@@ -168,6 +173,11 @@ const styles = StyleSheet.create({
     color: '#555',
     marginBottom: 8,
     paddingLeft: 5,
+  },
+  backgroundImage: {
+    flex: 1,
+    justifyContent: 'center',
+    
   },
   input: {
     width: '100%',

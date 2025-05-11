@@ -323,5 +323,40 @@ const getBreathingSessions = async (req, res) => {
   }
 };
 
-module.exports = {registerUser, loginUser, validateToken, authenticate, createProfile, fetchProfile, forgotPassword, verifyOTP, resetPassword, saveBreathingSession, getBreathingSessions};
+const songsByMood = {
+  Stressed: [
+    { id: '1', title: 'Water Fountain', url: 'http://192.168.32.58:5000/music/water_fountain.mp3' },
+    { id: '2', title: 'Peaceful Mind', url: 'https://example.com/audio/peaceful-mind.mp3' }
+  ],
+  Sad: [
+    { id: '3', title: 'Hopeful Sunrise', url: 'https://example.com/audio/hopeful-sunrise.mp3' }
+  ],
+  Hopeful: [
+    { id: '4', title: 'Bright Future', url: 'https://example.com/audio/bright-future.mp3' }
+  ],
+  Motivated: [
+    { id: '5', title: 'Go Get It', url: 'https://example.com/audio/go-get-it.mp3' }
+  ]
+};
+
+const getSongsByMood = (req, res) => {
+  const mood = req.query.mood;
+  if (!mood || !songsByMood[mood]) {
+    return res.status(200).json({ songs: [] });
+  }
+  return res.status(200).json({ songs: songsByMood[mood] });
+};
+
+module.exports = {registerUser, 
+                  loginUser, 
+                  validateToken,
+                  authenticate, 
+                  createProfile, 
+                  fetchProfile, 
+                  forgotPassword, 
+                  verifyOTP, 
+                  resetPassword, 
+                  saveBreathingSession, 
+                  getBreathingSessions, 
+                  getSongsByMood};
 

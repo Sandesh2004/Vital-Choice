@@ -13,6 +13,7 @@ app.use(express.json());
 
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
+app.use('/music', express.static('music'));
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
